@@ -4,6 +4,10 @@ AI-powered expense tracker: scan receipts, auto-categorize spending, and split b
 
 ## Features
 
+<p align="center">
+  <img src="docs/screenshot.png" alt="Scan result: merchant, total, and categorized line items" width="320">
+</p>
+
 - **AI receipt scan** — snap or pick a receipt photo; a vision LLM extracts the merchant, date, total, and line items, then categorizes each item and flags unusually high spend.
 - **Expense tracking** — add and browse manual expenses with categories.
 - **Bill splitting** — split a receipt or expense across people and track who has paid.
