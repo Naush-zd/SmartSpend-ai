@@ -1,0 +1,31 @@
+# --- secrets ---
+.env
+.env.local
+*.env
+!.env.example
+
+# --- python / backend ---
+__pycache__/
+*.py[cod]
+.venv/
+.uv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# --- android ---
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+android/captures/
+*.apk
+*.aab
+*.keystore
+
+# --- os / editor ---
+.DS_Store
+.idea/
+*.iml
+.vscode/
