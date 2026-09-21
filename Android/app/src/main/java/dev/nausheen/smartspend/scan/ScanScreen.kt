@@ -35,6 +35,7 @@ import dev.nausheen.smartspend.data.model.ScanResult
 fun ScanScreen(
     accessToken: String?,
     modifier: Modifier = Modifier,
+    onSignOut: () -> Unit = {},
     vm: ScanViewModel = viewModel(),
 ) {
     val context = LocalContext.current
@@ -67,7 +68,13 @@ fun ScanScreen(
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text("Scan a receipt", fontWeight = FontWeight.Bold)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text("Scan a receipt", fontWeight = FontWeight.Bold)
+            androidx.compose.material3.TextButton(onClick = onSignOut) { Text("Sign out") }
+        }
 
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             OutlinedButton(onClick = {
