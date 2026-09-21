@@ -36,6 +36,11 @@ class ScanViewModel(
     private val _actionMessage = MutableStateFlow<String?>(null)
     val actionMessage: StateFlow<String?> = _actionMessage.asStateFlow()
 
+    /** True while an add-to-expense / split request is running, so the buttons
+     *  can disable and a second tap can't create a duplicate record. */
+    private val _actionInProgress = MutableStateFlow(false)
+    val actionInProgress: StateFlow<Boolean> = _actionInProgress.asStateFlow()
+
     fun scan(context: Context, uri: Uri, accessToken: String?) {
         if (accessToken.isNullOrBlank()) {
             _state.value = ScanUiState.Error("Not signed in")
@@ -52,22 +57,24 @@ class ScanViewModel(
     /** Turn the scanned receipt into a single expense (merchant + total + the
      *  most common item category). */
     fun addToExpenses(result: ScanResult, accessToken: String?) {
-        if (accessToken.isNullOrBlank()) return
+        if (accessToken.isNullOrBlank() || _actionInProgress.value) return
         val amount = result.totalAmount ?: result.items.sumOf { it.amount }
         val category = result.items.mapNotNull { it.category }
             .groupingBy { it }.eachCount().maxByOrNull { it.value }?.key ?: "Other"
         val title = result.merchantName ?: "Scanned receipt"
+        _actionInProgress.value = true
         viewModelScope.launch {
             expenseRepository.create(accessToken, ExpenseIn(title, amount, category, note = "From receipt scan"))
                 .onSuccess { _actionMessage.value = "Added to expenses" }
                 .onFailure { _actionMessage.value = "Could not add: ${it.message}" }
+            _actionInProgress.value = false
         }
     }
 
     /** Create an even 2-way split from the receipt total, linked to the saved
      *  receipt row via receiptId. */
     fun splitReceipt(result: ScanResult, accessToken: String?) {
-        if (accessToken.isNullOrBlank()) return
+        if (accessToken.isNullOrBlank() || _actionInProgress.value) return
         val total = result.totalAmount ?: result.items.sumOf { it.amount }
         val share = total / 2
         val body = SplitIn(
@@ -79,14 +86,20 @@ class ScanViewModel(
                 SplitMemberIn("Friend", share),
             ),
         )
+        _actionInProgress.value = true
         viewModelScope.launch {
             splitRepository.create(accessToken, body)
                 .onSuccess { _actionMessage.value = "Split created in Splits tab" }
                 .onFailure { _actionMessage.value = "Could not split: ${it.message}" }
+            _actionInProgress.value = false
         }
     }
 
     fun clearActionMessage() { _actionMessage.value = null }
 
-    fun reset() { _state.value = ScanUiState.Idle }
+    fun reset() {
+        _state.value = ScanUiState.Idle
+        _actionMessage.value = null
+        _actionInProgress.value = false
+    }
 }

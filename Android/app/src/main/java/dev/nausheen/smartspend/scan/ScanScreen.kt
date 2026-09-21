@@ -47,6 +47,7 @@ fun ScanScreen(
     val context = LocalContext.current
     val state by vm.state.collectAsStateWithLifecycle()
     val actionMessage by vm.actionMessage.collectAsStateWithLifecycle()
+    val actionInProgress by vm.actionInProgress.collectAsStateWithLifecycle()
     var imageUri by remember { mutableStateOf<Uri?>(null) }
     var pendingCameraUri by remember { mutableStateOf<Uri?>(null) }
 
@@ -123,6 +124,7 @@ fun ScanScreen(
             is ScanUiState.Error -> Text("Error: ${s.message}")
             is ScanUiState.Success -> ResultCard(
                 result = s.result,
+                actionEnabled = !actionInProgress,
                 onAddToExpenses = { vm.addToExpenses(s.result, accessToken) },
                 onSplit = { vm.splitReceipt(s.result, accessToken) },
             )
@@ -136,6 +138,7 @@ fun ScanScreen(
 @Composable
 private fun ResultCard(
     result: ScanResult,
+    actionEnabled: Boolean,
     onAddToExpenses: () -> Unit,
     onSplit: () -> Unit,
 ) {
@@ -206,12 +209,13 @@ private fun ResultCard(
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Button(
                     onClick = onAddToExpenses,
+                    enabled = actionEnabled,
                     colors = androidx.compose.material3.ButtonDefaults.buttonColors(
                         containerColor = androidx.compose.material3.MaterialTheme.colorScheme.primary,
                         contentColor = androidx.compose.ui.graphics.Color.White,
                     ),
                 ) { Text("Add to expenses") }
-                OutlinedButton(onClick = onSplit) { Text("Split this") }
+                OutlinedButton(onClick = onSplit, enabled = actionEnabled) { Text("Split this") }
             }
         }
     }
