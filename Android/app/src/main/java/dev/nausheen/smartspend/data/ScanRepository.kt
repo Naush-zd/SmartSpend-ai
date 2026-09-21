@@ -11,7 +11,7 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
 
 class ScanRepository(
-    private val api: dev.nausheen.smartspend.data.network.ScanApi = NetworkModule.scanApi,
+    private val api: dev.nausheen.smartspend.data.network.SmartSpendApi = NetworkModule.api,
 ) {
     /** Reads the image at [uri], sends it to the backend /scan endpoint. */
     suspend fun scan(context: Context, uri: Uri, accessToken: String): Result<ScanResult> =

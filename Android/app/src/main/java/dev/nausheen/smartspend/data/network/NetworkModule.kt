@@ -21,12 +21,12 @@ object NetworkModule {
         .readTimeout(90, TimeUnit.SECONDS) // vision + LLM can be slow
         .build()
 
-    val scanApi: ScanApi by lazy {
+    val api: SmartSpendApi by lazy {
         Retrofit.Builder()
             .baseUrl(BuildConfig.BACKEND_BASE_URL)
             .client(okHttp)
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
-            .create(ScanApi::class.java)
+            .create(SmartSpendApi::class.java)
     }
 }
