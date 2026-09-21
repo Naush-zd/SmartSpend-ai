@@ -10,11 +10,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -29,6 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -49,11 +53,14 @@ fun SplitsScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        containerColor = Color.Transparent,
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = { showCreate = true },
                 text = { Text("New split") },
                 icon = {},
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = Color.White,
             )
         },
     ) { padding ->
@@ -61,15 +68,23 @@ fun SplitsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+                .padding(horizontal = 20.dp)
+                .padding(top = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("Bill splits", fontWeight = FontWeight.Bold)
+            Text(
+                "Bill splits",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+            )
             when {
-                state.loading -> CircularProgressIndicator()
+                state.loading -> CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 state.error != null -> Text("Error: ${state.error}")
-                state.splits.isEmpty() -> Text("No splits yet. Tap New split to create one.")
-                else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                state.splits.isEmpty() -> Text(
+                    "No splits yet. Tap New split, or split a scanned receipt.",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     items(state.splits, key = { it.id }) { s ->
                         SplitCard(s, onMarkPaid = { vm.markPaid(accessToken, it) })
                     }
@@ -91,20 +106,34 @@ fun SplitsScreen(
 
 @Composable
 private fun SplitCard(s: Split, onMarkPaid: (memberId: String) -> Unit) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(s.title, fontWeight = FontWeight.Bold)
-            Text("Total: INR ${"%.2f".format(s.totalAmount)}")
-            HorizontalDivider()
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+    ) {
+        Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(s.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                Text("₹${"%.0f".format(s.totalAmount)}", fontWeight = FontWeight.Bold)
+            }
+            HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
             s.members.forEach { m ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text("${m.name}: INR ${"%.2f".format(m.amountOwed)}")
-                    if (m.isPaid) Text("Paid", fontWeight = FontWeight.Medium)
-                    else TextButton(onClick = { onMarkPaid(m.id) }) { Text("Mark paid") }
+                    Text("${m.name} · ₹${"%.0f".format(m.amountOwed)}")
+                    if (m.isPaid) {
+                        Text("Paid", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
+                    } else {
+                        TextButton(onClick = { onMarkPaid(m.id) }) { Text("Mark paid") }
+                    }
                 }
             }
         }

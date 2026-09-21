@@ -1,6 +1,8 @@
 package dev.nausheen.smartspend.expenses
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,14 +12,20 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -26,6 +34,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -45,11 +55,14 @@ fun ExpensesScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        containerColor = Color.Transparent,
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = { showAdd = true },
                 text = { Text("Add") },
                 icon = {},
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = Color.White,
             )
         },
     ) { padding ->
@@ -57,17 +70,25 @@ fun ExpensesScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+                .padding(horizontal = 20.dp)
+                .padding(top = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("Expenses", fontWeight = FontWeight.Bold)
+            Text(
+                "Expenses",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+            )
             when {
-                state.loading -> CircularProgressIndicator()
+                state.loading -> CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 state.error != null -> Text("Error: ${state.error}")
-                state.expenses.isEmpty() -> Text("No expenses yet. Tap Add to create one.")
-                else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                state.expenses.isEmpty() -> Text(
+                    "No expenses yet. Tap Add to create one, or scan a receipt.",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     items(state.expenses, key = { it.id }) { e ->
-                        ExpenseRow(e, onDelete = { vm.delete(accessToken, e.id) })
+                        SwipeableExpenseRow(e, onDelete = { vm.delete(accessToken, e.id) })
                     }
                 }
             }
@@ -86,23 +107,69 @@ fun ExpensesScreen(
 }
 
 @Composable
-private fun ExpenseRow(e: Expense, onDelete: () -> Unit) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+private fun SwipeableExpenseRow(e: Expense, onDelete: () -> Unit) {
+    val shape = RoundedCornerShape(20.dp)
+    val dismissState = rememberSwipeToDismissBoxState(
+        confirmValueChange = { value ->
+            if (value == SwipeToDismissBoxValue.EndToStart) { onDelete(); true } else false
+        },
+    )
+    SwipeToDismissBox(
+        state = dismissState,
+        enableDismissFromStartToEnd = false,
+        backgroundContent = {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(shape)
+                    .background(MaterialTheme.colorScheme.error)
+                    .padding(horizontal = 24.dp),
+                contentAlignment = Alignment.CenterEnd,
+            ) {
+                Text("Delete", color = Color.White, fontWeight = FontWeight.SemiBold)
+            }
+        },
+    ) {
+        ExpenseCard(e)
+    }
+}
+
+@Composable
+private fun ExpenseCard(e: Expense) {
+    val (chipBg, chipFg) = dev.nausheen.smartspend.ui.theme.categoryColors(e.category)
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
+                .padding(18.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column {
-                Text(e.title, fontWeight = FontWeight.Medium)
-                Text("${e.category}${e.expenseDate?.let { " · $it" } ?: ""}")
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(e.title, fontWeight = FontWeight.SemiBold)
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(percent = 50))
+                        .background(chipBg)
+                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                ) {
+                    Text(
+                        "${e.category}${e.expenseDate?.let { "  ·  $it" } ?: ""}",
+                        color = chipFg,
+                        style = MaterialTheme.typography.labelMedium,
+                    )
+                }
             }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("INR ${"%.2f".format(e.amount)}")
-                TextButton(onClick = onDelete) { Text("Delete") }
-            }
+            Text(
+                "₹${"%.0f".format(e.amount)}",
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleMedium,
+            )
         }
     }
 }
