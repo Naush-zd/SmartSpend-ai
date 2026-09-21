@@ -26,11 +26,12 @@ class SplitsViewModel(
 
     fun load(token: String?) {
         if (token == null) { _state.value = _state.value.copy(error = "Not signed in"); return }
-        _state.value = _state.value.copy(loading = true, error = null)
+        val showLoader = _state.value.splits.isEmpty()
+        _state.value = _state.value.copy(loading = showLoader, error = null)
         viewModelScope.launch {
             repository.list(token)
                 .onSuccess { _state.value = SplitsUiState(splits = it) }
-                .onFailure { _state.value = SplitsUiState(error = it.message ?: "Failed to load") }
+                .onFailure { _state.value = _state.value.copy(loading = false, error = it.message ?: "Failed to load") }
         }
     }
 
@@ -38,15 +39,23 @@ class SplitsViewModel(
         if (token == null) return
         viewModelScope.launch {
             repository.create(token, SplitIn(title = title, totalAmount = total, members = members))
-                .onSuccess { load(token) }
+                .onSuccess { created -> _state.value = _state.value.copy(splits = listOf(created) + _state.value.splits) }
                 .onFailure { _state.value = _state.value.copy(error = it.message ?: "Failed to create") }
         }
     }
 
     fun markPaid(token: String?, memberId: String) {
         if (token == null) return
+        // Update the member in place; no loader, no full refresh.
+        _state.value = _state.value.copy(
+            splits = _state.value.splits.map { split ->
+                split.copy(members = split.members.map { m ->
+                    if (m.id == memberId) m.copy(isPaid = true) else m
+                })
+            },
+        )
         viewModelScope.launch {
-            repository.markPaid(token, memberId).onSuccess { load(token) }
+            repository.markPaid(token, memberId)
         }
     }
 }
