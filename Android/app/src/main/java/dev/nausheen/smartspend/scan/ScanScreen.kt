@@ -40,6 +40,7 @@ fun ScanScreen(
 ) {
     val context = LocalContext.current
     val state by vm.state.collectAsStateWithLifecycle()
+    val actionMessage by vm.actionMessage.collectAsStateWithLifecycle()
     var imageUri by remember { mutableStateOf<Uri?>(null) }
     var pendingCameraUri by remember { mutableStateOf<Uri?>(null) }
 
@@ -107,14 +108,24 @@ fun ScanScreen(
         when (val s = state) {
             is ScanUiState.Loading -> CircularProgressIndicator()
             is ScanUiState.Error -> Text("Error: ${s.message}")
-            is ScanUiState.Success -> ResultCard(s.result)
+            is ScanUiState.Success -> ResultCard(
+                result = s.result,
+                onAddToExpenses = { vm.addToExpenses(s.result, accessToken) },
+                onSplit = { vm.splitReceipt(s.result, accessToken) },
+            )
             ScanUiState.Idle -> Unit
         }
+
+        actionMessage?.let { Text(it, fontWeight = FontWeight.Medium) }
     }
 }
 
 @Composable
-private fun ResultCard(result: ScanResult) {
+private fun ResultCard(
+    result: ScanResult,
+    onAddToExpenses: () -> Unit,
+    onSplit: () -> Unit,
+) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -139,6 +150,11 @@ private fun ResultCard(result: ScanResult) {
                     }
                     Text("${result.currency} ${"%.2f".format(item.amount)}")
                 }
+            }
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(onClick = onAddToExpenses) { Text("Add to expenses") }
+                OutlinedButton(onClick = onSplit) { Text("Split this") }
             }
         }
     }

@@ -72,4 +72,5 @@ async def scan(
             ]
         ).execute()
 
+    result.receipt_id = receipt["id"]
     return result

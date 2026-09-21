@@ -20,6 +20,7 @@ class ExtractedReceipt(BaseModel):
 class ScanResult(ExtractedReceipt):
     is_anomaly: bool = False
     anomaly_reason: str | None = None
+    receipt_id: str | None = None
 
 
 # --- request bodies ---

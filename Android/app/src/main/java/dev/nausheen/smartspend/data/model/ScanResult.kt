@@ -19,4 +19,5 @@ data class ScanResult(
     val items: List<LineItem> = emptyList(),
     @SerialName("is_anomaly") val isAnomaly: Boolean = false,
     @SerialName("anomaly_reason") val anomalyReason: String? = null,
+    @SerialName("receipt_id") val receiptId: String? = null,
 )
