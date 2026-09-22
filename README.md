@@ -2,6 +2,14 @@
 
 AI-powered expense tracker: scan receipts, auto-categorize spending, and split bills. Native Android (Kotlin, Jetpack Compose, MVVM) with a FastAPI + LangGraph + Supabase backend.
 
+## Demo
+
+A quick walkthrough: sign up, scan a receipt (AI extracts and categorizes the items), add it to expenses, split it, mark a share paid, and swipe to delete.
+
+https://github.com/Naush-zd/SmartSpend-ai/raw/main/docs/demo.mp4
+
+> If the video does not play inline, [download or view it here](docs/demo.mp4).
+
 ## Features
 
 <p align="center">
