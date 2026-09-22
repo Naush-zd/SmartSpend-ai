@@ -23,6 +23,8 @@ android/captures/
 *.apk
 *.aab
 *.keystore
+# but keep the published debug build for download
+!releases/smartspend-debug.apk
 
 # --- os / editor ---
 .DS_Store

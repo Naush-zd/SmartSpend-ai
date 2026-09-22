@@ -10,6 +10,8 @@ https://github.com/Naush-zd/SmartSpend-ai/raw/main/docs/demo.mp4
 
 > If the video does not play inline, [download or view it here](docs/demo.mp4).
 
+**Try it:** [download the debug APK](releases/smartspend-debug.apk) (Android 8.0+). It talks to the live backend hosted on Render, so no local setup is needed.
+
 ## Features
 
 <p align="center">
